@@ -1,0 +1,41 @@
+[project]
+name = "pinn-piezo"
+version = "0.1.0"
+description = "Physics-Informed Neural Networks for 2D piezoelectric beams"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Daniel Gonzalez" }]
+license = { text = "MIT" }
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "pandas>=2.0",
+    "matplotlib>=3.7",
+    "scikit-learn>=1.3",
+    "torch>=2.0",
+    "torchopt>=0.7",
+    "torchsummary>=1.5",
+    "pyDOE>=0.3.8",
+]
+
+[project.optional-dependencies]
+mlflow = ["mlflow>=2.0"]
+dev = ["ruff>=0.5", "pytest>=8.0"]
+
+[project.scripts]
+pinn-generate-geometry = "scripts.generate_geometry:main"
+pinn-train-indirect = "scripts.train_indirect:main"
+pinn-train-direct = "scripts.train_direct:main"
+pinn-evaluate = "scripts.evaluate:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src", "."]
+include = ["pinn_piezo*", "scripts*"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+"scripts" = "scripts"
