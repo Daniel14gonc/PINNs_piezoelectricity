@@ -34,3 +34,6 @@ mlruns/
 
 # NOTE: `models/` is intentionally NOT ignored — it contains the
 # pre-trained weights reported in the paper.
+
+# Reviewer-revision generated artefacts (figures / tables / reference CSVs)
+outputs/revision/

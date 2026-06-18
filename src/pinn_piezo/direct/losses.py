@@ -10,6 +10,11 @@ from ..config import HEIGHT
 
 loss_fn = nn.MSELoss()
 
+# Tip traction resultant (N) applied on the right edge. Module-level so the
+# generalization study (Cluster 8) can sweep the load by setting
+# ``pinn_piezo.direct.losses.APPLIED_FORCE_Y`` before training.
+APPLIED_FORCE_Y = 0.1
+
 
 def physics_loss(x, y, model, coefficients):
     """PDE residual built from a column-wise Jacobian of the network output."""
@@ -142,7 +147,7 @@ def stress_BC_loss(xy_top, xy_bottom, xy_right, xy_left, model):
     loss_bottom = (torch.mean(sigmax_pred_bottom ** 2)
                    + torch.mean(tauxz_pred_bottom ** 2))
 
-    loss_right = traction_BC_loss(xy_right, model, applied_force_y=0.1)
+    loss_right = traction_BC_loss(xy_right, model, applied_force_y=APPLIED_FORCE_Y)
 
     return loss_top + loss_right + loss_bottom
 

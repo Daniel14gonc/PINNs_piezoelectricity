@@ -75,6 +75,29 @@ def get_coefficients(x, y):
             epsilon1_array, epsilon2_array, e31_array, e33_array)
 
 
+def build_coefficients(xy, negate_e33: bool = True) -> np.ndarray:
+    """Return the ``(N, 8)`` per-point coefficient block for arbitrary points.
+
+    Columns follow the collocation convention
+    ``[C11, C12, C22, G, eps1, eps2, e31, e33]``. ``negate_e33`` reproduces
+    the sign flip the training loaders apply (``coefficients[:, 7] *= -1``)
+    so boundary coefficients are consistent with the collocation ones.
+    Used by the conventional ("Case A") baseline to reconstruct stresses /
+    electric displacement at boundary points.
+    """
+    xy = np.asarray(xy, dtype=float)
+    x = xy[:, 0]
+    y = xy[:, 1]
+    (C11_array, C12_array, C22_array, G_array,
+     epsilon1_array, epsilon2_array,
+     e31_array, e33_array) = get_coefficients(x, y)
+    coeff = np.hstack([C11_array, C12_array, C22_array, G_array,
+                       epsilon1_array, epsilon2_array, e31_array, e33_array])
+    if negate_e33:
+        coeff[:, 7] = -coeff[:, 7]
+    return coeff
+
+
 # --- Boundary set builders ---------------------------------------------------
 def create_BCs_stress_elec(n_samples):
     sampler = qmc.LatinHypercube(d=2)

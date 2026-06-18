@@ -8,6 +8,7 @@ import torch
 import torch.nn.init as init
 from torch import nn
 
+from .. import config
 from ..config import HEIGHT, VOLTAGE
 
 
@@ -27,7 +28,10 @@ def v_constraint(x, y):
 
 
 def phi_constraint(x, y):
-    return VOLTAGE / HEIGHT * y  # φ = 0 at y = 0, φ = 100 at y = H
+    # Reads ``config.VOLTAGE`` at call time so the applied voltage can be
+    # changed (e.g. the generalization study, Cluster 8) by setting
+    # ``pinn_piezo.config.VOLTAGE`` before building/evaluating the model.
+    return config.VOLTAGE / HEIGHT * y  # φ = 0 at y = 0, φ = V at y = H
 
 
 class FCNUniform(nn.Module):
