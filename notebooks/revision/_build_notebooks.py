@@ -55,33 +55,64 @@ def write_nb(name: str, cells: list[dict]) -> None:
 
 # --- Shared cells ------------------------------------------------------------
 SETUP = code(f"""
-# === Environment setup (Colab + local) ===
+# === Environment setup (robust: local / Colab native / VSCode-Colab) ===
+# Run this cell FIRST. It makes `import pinn_piezo` work regardless of where
+# the kernel is, and fails loudly with instructions if it can't.
 import os, sys, subprocess
-IN_COLAB = 'google.colab' in sys.modules
 REPO_URL = '{REPO_URL}'
+REPO_DIR = 'PINNs_piezoelectricity'
 
-if IN_COLAB:
-    if not os.path.isdir('PINNs_piezoelectricity'):
-        subprocess.run(['git', 'clone', REPO_URL], check=True)
-    os.chdir('PINNs_piezoelectricity')
-    subprocess.run([sys.executable, '-m', 'pip', '-q', 'install', '-e', '.'], check=True)
-    subprocess.run([sys.executable, '-m', 'pip', '-q', 'install', 'scikit-fem'], check=True)
-else:
-    # Local: walk up from the notebook to find the repo root (the folder
-    # containing src/pinn_piezo), chdir there and put src on the path.
+def _have():
+    try:
+        import pinn_piezo  # noqa: F401
+        return True
+    except Exception:
+        return False
+
+# 1) Already installed? (e.g. `pip install -e .` locally)
+ok = _have()
+
+# 2) Are we *inside* a local checkout? Walk up for src/pinn_piezo.
+if not ok:
     d = os.getcwd()
-    for _ in range(6):
+    for _ in range(8):
         if os.path.isdir(os.path.join(d, 'src', 'pinn_piezo')):
+            os.chdir(d); sys.path.insert(0, os.path.join(d, 'src')); break
+        nd = os.path.dirname(d)
+        if nd == d:
             break
-        d = os.path.dirname(d)
-    os.chdir(d)
-    if os.path.join(d, 'src') not in sys.path:
-        sys.path.insert(0, os.path.join(d, 'src'))
+        d = nd
+    ok = _have()
+
+# 3) Fresh remote runtime (Colab / VSCode-Colab): clone + install.
+if not ok:
+    if not os.path.isdir(REPO_DIR):
+        subprocess.run(['git', 'clone', REPO_URL], check=True)
+    os.chdir(REPO_DIR)
+    subprocess.run([sys.executable, '-m', 'pip', '-q', 'install', '-e', '.'], check=True)
+    sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
+    ok = _have()
+
+# scikit-fem is only needed by the FEM cells; install if missing.
+try:
+    import skfem  # noqa: F401
+except Exception:
+    subprocess.run([sys.executable, '-m', 'pip', '-q', 'install', 'scikit-fem'], check=True)
+
+# Verify the *new revision modules* are present (i.e. the repo was pushed).
+import importlib
+missing = [m for m in ('pinn_piezo.fem', 'pinn_piezo.metrics',
+                       'pinn_piezo.indirect.standard')
+           if importlib.util.find_spec(m) is None]
+assert not missing, (
+    'These revision modules are missing from the installed package: '
+    + ', '.join(missing) + '. Push them to GitHub (git add/commit/push) so the '
+    'clone above includes them, then re-run this cell.')
 
 import torch
-print('cwd       :', os.getcwd())
-print('torch     :', torch.__version__)
-print('cuda avail:', torch.cuda.is_available())
+print('pinn_piezo :', __import__('pinn_piezo').__file__)
+print('cwd        :', os.getcwd())
+print('torch      :', torch.__version__, '| cuda:', torch.cuda.is_available())
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 """)
 
