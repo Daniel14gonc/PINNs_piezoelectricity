@@ -118,6 +118,22 @@ OUT = Path('outputs/revision'); OUT.mkdir(parents=True, exist_ok=True)
 print('Artefacts ->', OUT.resolve())
 """)
 
+ENSURE_DATA = code("""
+# The geometry/collocation datasets (data/*.npy) are gitignored, so a fresh
+# clone does not have them. Regenerate the paper-size sets if missing
+# (n_collocation=150 -> 150**2 = 22,500 collocation points).
+import os
+from pinn_piezo import geometry
+for suffix in ('_m1', '_m1_d'):
+    if not os.path.exists(f'data/xy_top_non_normalized{suffix}.npy'):
+        geometry.generate_and_save(n_points=400, n_collocation=150,
+                                   n_collocation_test=200, suffix=suffix,
+                                   data_dir='data')
+        print('generated data', suffix)
+    else:
+        print('data present', suffix)
+""")
+
 
 # ===========================================================================
 # Notebook 00 - FEM reference (Cluster 5 backbone, feeds Cluster 6 & 8)
@@ -360,6 +376,7 @@ All variants are trained identically and scored against the FEM/your-FEM
 reference for a fair comparison.
 """),
         SETUP, OUTPUTS_DIR,
+        ENSURE_DATA,
         code("""
 # Reference for scoring (your external FEM if available, else this repo's FEM).
 import numpy as np, pandas as pd
@@ -493,6 +510,7 @@ sweep the collocation count (and boundary count) and report accuracy + time, so
 the choice is *justified empirically* rather than asserted.
 """),
         SETUP, OUTPUTS_DIR,
+        ENSURE_DATA,
         code("""
 import numpy as np, pandas as pd, torch
 torch.set_default_dtype(torch.float64)
@@ -605,6 +623,7 @@ up near near-zero field values - addressing the "uninformative pointwise error"
 comment.
 """),
         SETUP, OUTPUTS_DIR,
+        ENSURE_DATA,
         md("## 1. Loss curves: PDE loss, BC loss, total (Cluster 11)"),
         code("""
 import numpy as np, pandas as pd, torch
@@ -735,6 +754,7 @@ mesh-free). The scientifically safe framing (per the strategy) is that the PINN
 benefit is **mesh-free / surrogate evaluation**, not raw speed.
 """),
         SETUP, OUTPUTS_DIR,
+        ENSURE_DATA,
         code("""
 import time, numpy as np, pandas as pd, torch
 from pinn_piezo import fem
@@ -840,6 +860,7 @@ network handles *load magnitude* by linearity, but genuine generalization to new
 geometries/materials would require a parametric or operator-learning approach.
 """),
         SETUP, OUTPUTS_DIR,
+        ENSURE_DATA,
         md("## 1. FEM sweep over voltages and forces (exact references)"),
         code("""
 import numpy as np, pandas as pd, torch
