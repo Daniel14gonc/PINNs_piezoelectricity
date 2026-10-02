@@ -1,0 +1,40 @@
+{
+  "run": "paper20k_indirect_tanh_3x50",
+  "experiment": "indirect_tanh_3x50",
+  "group": "activation",
+  "formulation": "indirect",
+  "fields": "8 (mixed)",
+  "architecture": "3x50",
+  "activation": "tanh",
+  "interior_per_layer": 2048,
+  "seed": 20260728,
+  "gradient_routing": true,
+  "parameter_count": 5758,
+  "training_time_s": 3566.150770664215,
+  "training_time_h": 0.9905974362956153,
+  "epochs_adam": 20000,
+  "epochs_lbfgs": 0,
+  "metrics": {
+    "u": {
+      "rel_L2": 0.3279079068936674,
+      "RMSE": 3.776266179879226e-08,
+      "MAE": 2.892599708169226e-08,
+      "max_abs": 1.0402090488530118e-07,
+      "nRMSE": 0.05741707387597213
+    },
+    "v": {
+      "rel_L2": 0.34202409863136873,
+      "RMSE": 5.0489062914496205e-06,
+      "MAE": 3.8107760525333355e-06,
+      "max_abs": 1.0907368308615586e-05,
+      "nRMSE": 0.1534941865338472
+    },
+    "phi": {
+      "rel_L2": 0.01245253152481464,
+      "RMSE": 0.7281657596441283,
+      "MAE": 0.6039274045547239,
+      "max_abs": 1.544288125355063,
+      "nRMSE": 0.007281657596441282
+    }
+  }
+}

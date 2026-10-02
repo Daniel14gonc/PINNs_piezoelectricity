@@ -1,0 +1,31 @@
+{
+  "epochs_adam": 20000,
+  "epochs_lbfgs": 0,
+  "lr_adam": 0.001,
+  "lr_lbfgs": 1.0,
+  "activation": "silu",
+  "device": "cuda",
+  "dtype": "float64",
+  "num_threads": 1,
+  "force": -0.1,
+  "interior_per_layer": 2048,
+  "boundary_points": 256,
+  "interface_points": 256,
+  "lbfgs_interior_per_layer": 4096,
+  "lbfgs_boundary_points": 2048,
+  "lbfgs_interface_points": 2048,
+  "resample_every": 200,
+  "seed": 20260728,
+  "hidden_sizes": [
+    50,
+    50,
+    50
+  ],
+  "output_init_gain": 1.0,
+  "interface_enriched": true,
+  "phase_enriched": true,
+  "slender_warping": true,
+  "hard_floating_electrode": true,
+  "run_name": "paper20k_direct_three_field",
+  "periodic_checkpoints": false
+}

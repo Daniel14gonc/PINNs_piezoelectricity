@@ -88,8 +88,11 @@ cbot = np.concatenate([
 
 
 # --- Scalar piezoelectric coefficients used by the loss assembly ------------
-epsilon_1 = -c33[0]
-epsilon_2 = -c33[-1]
+# ``D = e eps + kappa E`` with ``E = -grad(phi)`` requires the positive
+# clamped permittivity.  The previous minus sign made the PINN constitutive law
+# inconsistent with ``D_const_strain`` and with the FEM reference solver.
+epsilon_1 = c33[0]
+epsilon_2 = c33[-1]
 
 e11_top = -c31[0, 0]
 e14_top = -c31[0, 1]

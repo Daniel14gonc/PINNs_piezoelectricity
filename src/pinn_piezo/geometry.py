@@ -75,15 +75,14 @@ def get_coefficients(x, y):
             epsilon1_array, epsilon2_array, e31_array, e33_array)
 
 
-def build_coefficients(xy, negate_e33: bool = True) -> np.ndarray:
+def build_coefficients(xy, negate_e33: bool = False) -> np.ndarray:
     """Return the ``(N, 8)`` per-point coefficient block for arbitrary points.
 
     Columns follow the collocation convention
-    ``[C11, C12, C22, G, eps1, eps2, e31, e33]``. ``negate_e33`` reproduces
-    the sign flip the training loaders apply (``coefficients[:, 7] *= -1``)
-    so boundary coefficients are consistent with the collocation ones.
-    Used by the conventional ("Case A") baseline to reconstruct stresses /
-    electric displacement at boundary points.
+    ``[C11, C12, C22, G, eps1, eps2, e31, e33]``.  Both piezoelectric
+    coefficients already flip together across the bimorph mid-plane in
+    :func:`get_coefficients`; changing only ``e33`` is not a valid poling
+    reversal.  ``negate_e33`` remains only as an explicit legacy option.
     """
     xy = np.asarray(xy, dtype=float)
     x = xy[:, 0]
@@ -187,7 +186,7 @@ def generate_and_save(n_points: int = 400,
     np.random.shuffle(x_collocation)
     x_collocation_test = get_collocation_points(n_collocation_test)
 
-    np.save(data_dir / f"x_right.npy", x_right)
+    np.save(data_dir / "x_right.npy", x_right)
     np.save(data_dir / f"x_collocation_non_normalized{suffix}.npy", x_collocation)
     np.save(data_dir / f"x_collocation_test_non_normalized{suffix}.npy", x_collocation_test)
     np.save(data_dir / f"xy_top_non_normalized{suffix}.npy", xy_top)

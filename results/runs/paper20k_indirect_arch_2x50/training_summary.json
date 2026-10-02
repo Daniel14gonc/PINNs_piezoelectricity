@@ -1,0 +1,6 @@
+{
+  "total_time_seconds": 3501.167174100876,
+  "parameter_count": 3208,
+  "best_loss_adam": 0.2628006602424329,
+  "best_loss_lbfgs": null
+}

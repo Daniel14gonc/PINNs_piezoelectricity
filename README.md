@@ -1,214 +1,106 @@
 # PINNs for Piezoelectricity
 
-Source code for the paper *"Physics-Informed Neural Networks applied to
-a 2D piezoelectric beam"*. Two formulations are implemented:
+Source code, trained models and metrics for the paper *"Enhanced Multiphysics
+Simulation via a Tailored PINN Architecture for Piezoelectric Cantilever Beam
+Energy Harvesters"*.
 
-* **Indirect (voltage-driven).** A potential difference is imposed
-  between the top and bottom electrodes and the beam deformation is the
-  output of the network. Lives in
-  [src/pinn_piezo/indirect/](src/pinn_piezo/indirect/).
-* **Direct (force-driven).** A traction is applied on the right end of
-  the beam and the resulting electric potential is recovered. Lives in
-  [src/pinn_piezo/direct/](src/pinn_piezo/direct/).
+A mixed eight-field PINN (outputs `u, v, φ, σxx, σyy, τxy, Dx, Dy`) is trained
+for a two-layer PVDF parallel bimorph cantilever in two settings:
 
-The original development happened in three Jupyter notebooks, kept for
-reference under [notebooks/](notebooks/):
-[geom_creation.ipynb](notebooks/geom_creation.ipynb),
-[PINN_pz_v3.ipynb](notebooks/PINN_pz_v3.ipynb),
-[PINN_pz_v3_directo.ipynb](notebooks/PINN_pz_v3_directo.ipynb). The
-runnable code now lives in [src/](src/) and [scripts/](scripts/).
+* **Converse effect (voltage-driven).** A potential difference is imposed
+  between the electrodes and the beam deformation is predicted
+  ([src/pinn_piezo/indirect/](src/pinn_piezo/indirect/)).
+* **Direct effect (force-driven).** A tip traction is applied and the
+  resulting electric potential is recovered
+  ([src/pinn_piezo/direct/](src/pinn_piezo/direct/)).
+
+Every result reported in the paper comes from a single campaign: **20 000 Adam
+epochs from random initialization, seed 20260728, float64, no L-BFGS**,
+evaluated against a P2 FEM reference (scikit-fem) on a common 201 × 21 grid.
 
 ## Repository layout
 
 ```
 src/pinn_piezo/
-    config.py            # geometric constants and configurable paths
-    materials.py         # piezoelectric material coefficients
-    geometry.py          # boundary / collocation point sampling
-    plotting.py          # shared matplotlib helpers
-    evaluation.py        # FEM ground-truth comparison
-    indirect/
-        model.py         # FCNPyramid / FCNUniform with hard constraints
-        losses.py        # physics + boundary losses (voltage-driven)
-        train.py         # Adam + L-BFGS training driver
-    direct/
-        model.py         # FCN with hard constraints
-        losses.py        # physics + boundary losses (force-driven)
-        train.py         # Adam (+ optional L-BFGS) training driver
+    config.py, materials.py   # geometry constants, PVDF coefficients (Tables 1-2)
+    geometry.py, scaling.py   # coefficient fields and residual scales
+    fem.py                    # P2 FEM reference solver
+    evaluation.py, metrics.py, plotting.py
+    indirect/                 # converse effect: model, losses, sampling, training
+    direct/                   # direct effect: model, losses, training
 
 scripts/
-    generate_geometry.py # create .npy data files
-    train_indirect.py    # train the indirect formulation
-    train_direct.py      # train the direct formulation
-    evaluate.py          # field plots and FEM comparison
-    run_all.py           # full pipeline: data -> train -> evaluate
+    run_paper20k_campaign.py  # definition and launcher of the 17 paper runs
+    build_paper20k_campaign.py# FEM evaluation, tables and figure package
+    train_indirect.py, train_direct.py                     # mixed 8-field PINN
+    train_indirect_three_field.py, train_direct_three_field.py  # 3-field baseline
+    build_results_package.py, evaluate.py, aggregate_stable_*.py  # used by the builder
+    figures/                  # Methods figures (sampling sets, FEM mesh)
 
-notebooks/               # original Colab notebooks (reference only)
-    geom_creation.ipynb
-    PINN_pz_v3.ipynb
-    PINN_pz_v3_directo.ipynb
+notebooks/
+    paper20k_full_campaign_colab.ipynb  # notebook that ran the paper campaign
+    original/                 # first-version notebooks (historical reference only)
 
-models/                  # paper-quality trained weights (committed)
-    indirect/model_PINN_indirect_paper_3.pt
-    direct/model_PINN_direct_paper_3.pt
-
-data/                    # .npy / FEM.csv files (generated)
-outputs/
-    runs/<run_name>/     # one self-contained directory per script invocation
-                         #   models/, figures/, checkpoints/, loss_*.npy,
-                         #   summary.json (run_all only)
+results/runs/
+    paper20k_<experiment>/    # config.json, models/*.pt, loss histories, metrics.json
+    paper20k_summary/         # all_metrics.json, ablation_results.csv, load sweeps
 ```
-
-All scripts (`run_all`, `train_indirect`, `train_direct`, `evaluate`)
-write everything they produce into `outputs/runs/<run_name>/`. The
-`--run-name` flag controls the directory name; if omitted, each script
-generates one with its own timestamp.
 
 ## Installation
 
-Both `uv` (recommended) and a plain `python -m venv` workflow are
-supported. Pick one.
+```bash
+pip install -r requirements.txt   # or: uv sync
+```
 
-### With [`uv`](https://github.com/astral-sh/uv)
+## Reproducing the paper
+
+### 1. Training (17 runs)
+
+The campaign was run on Google Colab (GPU, float64) with
+[notebooks/paper20k_full_campaign_colab.ipynb](notebooks/paper20k_full_campaign_colab.ipynb).
+The notebook expects a zip of this repository (`src/`, `scripts/`,
+`pyproject.toml`, `requirements.txt`) at
+`MyDrive/pinn_piezo_colab_bundle.zip`.
+
+The same runs can be launched locally:
 
 ```bash
-uv venv
-source .venv/bin/activate
-uv pip install -r requirements.txt
-uv pip install -e .
+export PYTHONPATH=src:.
+export PINN_PIEZO_OUTPUTS_DIR=outputs
+python -m scripts.run_paper20k_campaign --list
+python -m scripts.run_paper20k_campaign --epochs 20000 --device cuda \
+    --dtype float64 --experiments indirect_mixed direct_mixed
 ```
 
-### With `pip` and `venv`
+| Group | Experiments |
+|---|---|
+| Baselines | `direct_mixed` (0.1 N), `indirect_mixed` (100 V) |
+| Mixed vs three-field | `direct_three_field`, `indirect_three_field` |
+| Architecture (converse) | `indirect_arch_2x50`, `indirect_arch_4x50`, `indirect_arch_3x100` |
+| Activation | `indirect_tanh_3x50` |
+| Gradient routing | `indirect_routing_off` |
+| Interior points | `indirect_interior_512`, `indirect_interior_1024` |
+| Force sweep | `direct_force_0p05N`, `direct_force_0p2N` |
+| Voltage sweep | `indirect_voltage_{200,300,400,500}V` |
+
+### 2. Evaluation, tables and figures
+
+The trained models of all 17 runs are included in `results/`. To recompute
+the FEM comparison and regenerate every Results figure and table:
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
-pip install -e .
+PINN_PIEZO_OUTPUTS_DIR=results PYTHONPATH=src:. \
+    python -m scripts.build_paper20k_campaign
 ```
 
-> **Note.** The scripts also work without the editable install (each
-> entry-point under [scripts/](scripts/) bootstraps `src/` onto
-> `sys.path`), so `python -m scripts.run_all` works as long as you run
-> it from the repository root.
+This writes `results/paper20k_results_package/` (field maps, error maps,
+ablation and load-scaling plots, loss curves, `tables/error_metrics.md`) and
+refreshes `results/runs/paper20k_summary/`. Re-evaluating on a different
+machine reproduces the stored metrics to within 0.1 % relative.
 
-## Quick start: full pipeline
-
-The fastest path from a clean checkout to a complete set of artefacts
-is [scripts/run_all.py](scripts/run_all.py). It generates the geometry
-datasets, trains the selected formulation(s), evaluates them on the
-test grid (and, optionally, against an FEM ground truth) and bundles
-everything into a single timestamped directory under
-`outputs/runs/<run_name>/`.
+### 3. Methods figures
 
 ```bash
-# Both formulations with the default hyperparameters
-python -m scripts.run_all
-
-# Only the indirect PINN, with a shorter Adam stage and a custom run id
-python -m scripts.run_all \
-    --formulations indirect \
-    --epochs-adam-indirect 500 \
-    --epochs-lbfgs-indirect 100 \
-    --run-name indirect_quick
-
-# Skip training and just regenerate plots from the provided checkpoints
-python -m scripts.run_all --use-pretrained --skip-data
-
-# Compare against FEM ground truth
-python -m scripts.run_all --fem data/FEM.csv --run-name vs_fem
+cd results && python ../scripts/figures/make_sampling_figures.py   # Figs. 4, 5, 7
+python ../scripts/figures/make_fem_mesh_figure.py                   # Fig. 6
 ```
-
-Each `run_all` invocation produces:
-
-```
-outputs/runs/<run_name>/
-    summary.json                   # metrics, paths, hyperparameters
-    loss_<formulation>.npy         # training loss history (per epoch)
-    figures/
-        loss_<formulation>.png
-        <formulation>/
-            u_displacement_plot.png
-            v_displacement_plot.png
-            phi_plot.png
-            beam_deformation.png
-            (and *_FEM_plot.png / *_error_plot.png if --fem was set)
-    models/
-        model_PINN_<formulation>.pt
-    checkpoints/                   # indirect formulation only
-        indirect_ADAM/...
-        indirect_LBFGS/...
-```
-
-The standalone `train_indirect`, `train_direct` and `evaluate` scripts
-use the same `outputs/runs/<run_name>/` convention but only populate the
-sub-directories they need (`models/`, `checkpoints/`, `figures/`).
-
-### `run_all.py` flags
-
-| Flag                              | Default                  | Meaning                                                       |
-|-----------------------------------|--------------------------|---------------------------------------------------------------|
-| `--formulations`                  | `indirect direct`        | Subset of formulations to execute.                            |
-| `--run-name NAME`                 | `<UTC timestamp>`        | Identifier for the per-run output directory.                  |
-| `--n-points / --n-collocation /`<br>`--n-collocation-test` | `400 / 150 / 200`        | Geometry sample counts.                                       |
-| `--skip-data`                     | off                      | Reuse the `.npy` files already in `data/`.                    |
-| `--epochs-adam-indirect / --epochs-lbfgs-indirect` | `1000 / 200`         | Indirect-PINN optimiser budget.                               |
-| `--epochs-adam-direct / --epochs-lbfgs-direct`     | `3000 / 0`           | Direct-PINN optimiser budget.                                 |
-| `--use-pretrained`                | off                      | Skip training and copy the `.pt` files from `models/`.        |
-| `--seed N`                        | unset                    | Seed `numpy` and `torch` for reproducibility.                 |
-| `--fem PATH`                      | unset                    | Compute L2 errors / error maps against an FEM CSV.            |
-
-## Running the individual steps
-
-If you prefer to drive each stage separately:
-
-```bash
-# 1. Generate the .npy geometry / collocation datasets
-python -m scripts.generate_geometry           # both suffixes (_m1 and _m1_d)
-
-# 2. Train one (or both) of the PINNs
-python -m scripts.train_indirect
-python -m scripts.train_direct
-
-# 3. Evaluate against the test grid (and, optionally, FEM data)
-python -m scripts.evaluate \
-    --formulation indirect \
-    --state models/indirect/model_PINN_indirect_paper_3.pt
-
-python -m scripts.evaluate \
-    --formulation direct \
-    --state models/direct/model_PINN_direct_paper_3.pt \
-    --fem data/FEM.csv
-```
-
-`scripts/evaluate.py` saves figures by default (use `--no-save-figs`
-to disable). Pass `--show` to also pop up interactive windows; without
-it the script uses the non-interactive `Agg` backend.
-
-## Pre-trained models
-
-The two `.pt` files under [models/](models/) are **the trained weights
-reported in the paper** and are checked into the repository on purpose
-(they are not ignored by `.gitignore`):
-
-* [models/indirect/model_PINN_indirect_paper_3.pt](models/indirect/model_PINN_indirect_paper_3.pt)
-* [models/direct/model_PINN_direct_paper_3.pt](models/direct/model_PINN_direct_paper_3.pt)
-
-Newly trained models from `train_indirect.py`, `train_direct.py` or
-`run_all.py` go into `outputs/runs/<run_name>/models/` instead, so the
-paper artefacts are never accidentally overwritten. Use `--use-pretrained`
-in `run_all.py` (or pass the paper paths to `--state` in
-`evaluate.py`) to reproduce the figures from those weights.
-
-## Configurable paths
-
-Paths can be overridden through environment variables so the same code
-runs locally, in CI, or on Colab:
-
-| Variable                  | Default              |
-|---------------------------|----------------------|
-| `PINN_PIEZO_DATA_DIR`     | `<repo>/data`        |
-| `PINN_PIEZO_MODELS_DIR`   | `<repo>/models`      |
-| `PINN_PIEZO_OUTPUTS_DIR`  | `<repo>/outputs`     |
-

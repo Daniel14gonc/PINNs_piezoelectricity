@@ -6,7 +6,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import torch
+
+from .metrics import field_metrics
 
 
 def load_FEM_ground_truth(csv_path: str | Path):
@@ -31,9 +32,14 @@ def evaluate_against_FEM(model, X_ground_truth, U, V, Phi, tensorize):
     v_pred_gr = preds_gr[:, 1]
     phi_pred_gr = preds_gr[:, 2]
 
-    l2_u = np.linalg.norm(u_pred_gr - U) / np.linalg.norm(U)
-    l2_v = np.linalg.norm(v_pred_gr - V) / np.linalg.norm(V)
-    l2_phi = np.linalg.norm(phi_pred_gr - Phi) / np.linalg.norm(Phi)
+    all_metrics = {
+        "u": field_metrics(u_pred_gr, U),
+        "v": field_metrics(v_pred_gr, V),
+        "phi": field_metrics(phi_pred_gr, Phi),
+    }
+    l2_u = all_metrics["u"]["rel_L2"]
+    l2_v = all_metrics["v"]["rel_L2"]
+    l2_phi = all_metrics["phi"]["rel_L2"]
 
     print(f"Relative L2 error (u): {l2_u:.4e}")
     print(f"Relative L2 error (v): {l2_v:.4e}")
@@ -47,4 +53,5 @@ def evaluate_against_FEM(model, X_ground_truth, U, V, Phi, tensorize):
         'l2_u': l2_u,
         'l2_v': l2_v,
         'l2_phi': l2_phi,
+        'field_metrics': all_metrics,
     }

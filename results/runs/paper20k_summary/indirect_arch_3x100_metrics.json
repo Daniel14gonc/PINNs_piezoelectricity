@@ -1,0 +1,40 @@
+{
+  "run": "paper20k_indirect_arch_3x100",
+  "experiment": "indirect_arch_3x100",
+  "group": "architecture",
+  "formulation": "indirect",
+  "fields": "8 (mixed)",
+  "architecture": "3x100",
+  "activation": "silu",
+  "interior_per_layer": 2048,
+  "seed": 20260728,
+  "gradient_routing": true,
+  "parameter_count": 21508,
+  "training_time_s": 4084.736043691635,
+  "training_time_h": 1.1346489010254541,
+  "epochs_adam": 20000,
+  "epochs_lbfgs": 0,
+  "metrics": {
+    "u": {
+      "rel_L2": 0.16479759935663074,
+      "RMSE": 1.8978487187792465e-08,
+      "MAE": 1.502315339130251e-08,
+      "max_abs": 4.566883957597521e-08,
+      "nRMSE": 0.02885626036431895
+    },
+    "v": {
+      "rel_L2": 0.19637183692590132,
+      "RMSE": 2.898810367123558e-06,
+      "MAE": 2.350024881101936e-06,
+      "max_abs": 5.114617439634484e-06,
+      "nRMSE": 0.08812810409475062
+    },
+    "phi": {
+      "rel_L2": 0.043874573481969506,
+      "RMSE": 2.5655797028015153,
+      "MAE": 2.0939506565934787,
+      "max_abs": 6.004010393400577,
+      "nRMSE": 0.02565579702801515
+    }
+  }
+}

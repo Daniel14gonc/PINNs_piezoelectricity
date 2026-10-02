@@ -1,0 +1,40 @@
+{
+  "run": "paper20k_direct_force_0p2N",
+  "experiment": "direct_force_0p2N",
+  "group": "force_sweep",
+  "formulation": "direct",
+  "fields": "8 (mixed)",
+  "architecture": "3x50",
+  "activation": "silu",
+  "interior_per_layer": 2048,
+  "seed": 20260728,
+  "gradient_routing": null,
+  "parameter_count": 5759,
+  "training_time_s": 3824.1611676216125,
+  "training_time_h": 1.0622669910060034,
+  "epochs_adam": 20000,
+  "epochs_lbfgs": 0,
+  "metrics": {
+    "u": {
+      "rel_L2": 0.11695230440568287,
+      "RMSE": 1.5391655020835057e-07,
+      "MAE": 1.2435693269118865e-07,
+      "max_abs": 3.891827922880673e-07,
+      "nRMSE": 0.02589230498054838
+    },
+    "v": {
+      "rel_L2": 0.15272268236096967,
+      "RMSE": 2.9527979990323717e-05,
+      "MAE": 2.4737899459194e-05,
+      "max_abs": 4.565709655194092e-05,
+      "nRMSE": 0.07438339031707765
+    },
+    "phi": {
+      "rel_L2": 0.06731223754536902,
+      "RMSE": 0.23374198882757763,
+      "MAE": 0.18609076546659378,
+      "max_abs": 0.7167415928125678,
+      "nRMSE": 0.03766047052642851
+    }
+  }
+}

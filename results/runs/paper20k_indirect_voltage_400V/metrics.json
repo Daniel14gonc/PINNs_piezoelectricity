@@ -1,0 +1,40 @@
+{
+  "run": "paper20k_indirect_voltage_400V",
+  "experiment": "indirect_voltage_400V",
+  "group": "voltage_sweep",
+  "formulation": "indirect",
+  "fields": "8 (mixed)",
+  "architecture": "3x50",
+  "activation": "silu",
+  "interior_per_layer": 2048,
+  "seed": 20260728,
+  "gradient_routing": true,
+  "parameter_count": 5758,
+  "training_time_s": 4255.736812353134,
+  "training_time_h": 1.1821491145425373,
+  "epochs_adam": 20000,
+  "epochs_lbfgs": 0,
+  "metrics": {
+    "u": {
+      "rel_L2": 0.10690503782571233,
+      "RMSE": 4.924576325399285e-08,
+      "MAE": 3.941634167813357e-08,
+      "max_abs": 1.2053645501087415e-07,
+      "nRMSE": 0.018719202329399706
+    },
+    "v": {
+      "rel_L2": 0.1497687297264755,
+      "RMSE": 8.843450327673116e-06,
+      "MAE": 7.283854792026298e-06,
+      "max_abs": 1.443825286122847e-05,
+      "nRMSE": 0.06721347831794147
+    },
+    "phi": {
+      "rel_L2": 0.045018664912335346,
+      "RMSE": 10.529923258971419,
+      "MAE": 8.80692292844718,
+      "max_abs": 20.926278529527806,
+      "nRMSE": 0.026324808147428543
+    }
+  }
+}

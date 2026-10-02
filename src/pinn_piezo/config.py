@@ -24,8 +24,7 @@ OUTPUTS_DIR = Path(os.environ.get("PINN_PIEZO_OUTPUTS_DIR", PROJECT_ROOT / "outp
 
 RUNS_DIR = OUTPUTS_DIR / "runs"
 
-for _dir in (DATA_DIR, MODELS_DIR, OUTPUTS_DIR, RUNS_DIR):
-    _dir.mkdir(parents=True, exist_ok=True)
+RUNS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # Beam geometry (m)
@@ -39,7 +38,25 @@ Y_BOTTOM = 0
 # Reference scales (used by the indirect notebook)
 U_c = 1e-9
 SIGMA_C = 1e-6
-VOLTAGE = 100
+# The indirect PINN is trained at this reference voltage.  Because the
+# governing problem is linear, a voltage sweep can reuse the same solution by
+# scaling *all* fields by ``VOLTAGE / REFERENCE_VOLTAGE`` (see
+# ``pinn_piezo.indirect.model``).  Keeping the reference separate from the
+# requested voltage avoids the old, inconsistent behaviour where only the
+# affine phi lifting changed during a sweep.
+REFERENCE_VOLTAGE = 100.0
+VOLTAGE = REFERENCE_VOLTAGE
+# Experimental normalization for the 100:1 indirect beam.  When enabled,
+# transverse stress/shear use their slender-beam orders instead of the axial
+# bending-stress order.  This changes only residual/output units, not physics.
+INDIRECT_SLENDER_TRANSVERSE_SCALING = False
+# Canonical direct-effect load selected for the paper figures.  The 1 N case
+# remains a linearity check and must not be mixed with the 0.1 N benchmark.
+REFERENCE_FORCE = 0.1
+# Canonical bimorph orientation.  The geometry datasets store the top layer as
+# ``-e_base`` and the bottom layer as ``+e_base``; using the same sign in the
+# FEM avoids comparing the PINN against the mirror-poled device.
+CANONICAL_POLING_SIGN = -1.0
 D_c = 8.854e-7
 
 # Length / stress / potential / displacement-field reference values
